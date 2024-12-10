@@ -1,5 +1,5 @@
 beautifulsoup4
 requests
 python-telegram-bot
-dotenv
+python-dotenv
 
