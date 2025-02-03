@@ -21,7 +21,7 @@ logging.basicConfig(
 
 load_dotenv()
 
-FETCH_VND_URL = "https://www.kebhana.com/cms/rate/wpfxd651_01i_01.do?tmpInqStrDt=2023-03-25&pbldDvCd=3&inqStrDt=20230325&inqKindCd=1"
+FETCH_VND_URL = "https://www.kebhana.com/cms/rate/wpfxd651_01i_01.do?pbldDvCd=3&inqKindCd=1"
 FETCH_INTERVAL = 5
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
@@ -29,13 +29,12 @@ TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 
 def fetch_vnd_exchange_rate():
-    url = "https://www.kebhana.com/cms/rate/wpfxd651_01i_01.do?tmpInqStrDt=2023-03-25&pbldDvCd=3&inqStrDt=20230325&inqKindCd=1"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(FETCH_VND_URL, headers=headers)
         response.raise_for_status()
     except requests.RequestException as e:
         logging.error(f"Failed to fetch the webpage: {e}")
@@ -47,9 +46,9 @@ def extract_vnd_rate_from_html(html):
     soup = BeautifulSoup(html, 'html.parser')
     rows = soup.select('tbody tr')
 
-    vnd_row = next((row for row in rows if 'VND' in row.get_text()), None)
+    vnd_row = next((row for row in rows if 'PHP' in row.get_text()), None)
     if not vnd_row:
-        logging.error("No VND data found in the table.")
+        logging.error("No PHP data found in the table.")
         return None
 
     try:
@@ -108,7 +107,7 @@ try:
 
         if previous_rate is not None:
             diff = current_rate - previous_rate
-            if round(abs(diff), 2) >= 0.01: # 변동 발생
+            if round(abs(diff), 2) >= 0.00: # 변동 발생
                 emoji = "🔺" if diff >= 0 else "🔽"
                 message = (f"{previous_rate:.2f} → {current_rate:.2f} {emoji}({round(abs(diff), 2)}원)\n"
                 f"다음 반영까지 **'{next_seconds}'초** {get_emoji_for_time(next_seconds)}\n"
