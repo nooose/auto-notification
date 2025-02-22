@@ -1,15 +1,17 @@
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 
-from data.candle import Candle
-from data.trade_states import TradeState, OrderState
-from upbit_client import UpbitClient
+from core.api.upbit_client import UpbitClient
+from core.data.candle import Candle
+from core.data.trade_states import TradeState, OrderState
 
 KST = timezone(timedelta(hours=9))
+
 
 def now_kst() -> datetime:
     """현재 한국 시간(KST)을 반환한다."""
     return datetime.now(KST)
+
 
 class Trader:
     """실 거래를 수행하는 클래스이다.
@@ -40,7 +42,7 @@ class Trader:
         print(f"현재 시간: {now}=====================================")
 
         if (self.state == TradeState.INITIAL_BUY or
-            self.state == TradeState.COMPLETED):
+                self.state == TradeState.COMPLETED):
             self._attempt_buy(candles)
 
         elif self.state == TradeState.WAITING_SELL:
@@ -67,8 +69,8 @@ class Trader:
             return
 
         live_candle = candles[0]
-        self.client.place_buy_order(self.volume) # TODO: 시장가 주문
-        uuid = self.client.place_sell_order(self.volume) # TODO: 수량을 얼마 팔지
+        self.client.place_buy_order(self.volume)  # TODO: 시장가 주문
+        uuid = self.client.place_sell_order(self.volume)  # TODO: 수량을 얼마 팔지
 
         self._set_buy_info(live_candle, uuid)
         self._change_state(TradeState.WAITING_SELL)
@@ -88,7 +90,7 @@ class Trader:
 
         recent_candles = candles[1:]
         # for candle in recent_candles:
-            # print(f"{candle.candle_date_time_kst} {candle.trade_price} {'red' if candle.is_red_candle() else 'blue'}")
+        # print(f"{candle.candle_date_time_kst} {candle.trade_price} {'red' if candle.is_red_candle() else 'blue'}")
         return len(recent_candles) == 4 and all(candle.is_blue_candle() for candle in recent_candles)
 
     def _set_buy_info(self, candle: Candle, uuid: str):
@@ -147,11 +149,11 @@ class Trader:
         """
 
         if (self.buy_time is None or
-            self.last_order_uuid is None):
+                self.last_order_uuid is None):
             return
 
         live_candle = candles[0]
-        
+
         if live_candle.candle_date_time_kst == self.buy_time:
             order_state = self.client.get_order(self.last_order_uuid)
             if order_state == OrderState.DONE:

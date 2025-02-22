@@ -1,5 +1,7 @@
 from dotenv import load_dotenv
 import os
+from pathlib import Path
+
 
 class Environment:
     """환경 변수를 가져오는 클래스
@@ -8,7 +10,9 @@ class Environment:
     def __init__(self):
         """.env 파일로 부터 환경 변수를 로드한다.
         """
-        load_dotenv(".env")
+
+        env_path = Path.cwd() / '.env'
+        load_dotenv(env_path)
 
     @staticmethod
     def get(key, default=None) -> str:
@@ -21,5 +25,4 @@ class Environment:
         Returns:
             str: 환경 변수 값
         """
-
         return os.getenv(key, default)

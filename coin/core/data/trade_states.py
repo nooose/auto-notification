@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class TradeState(Enum):
     """거래 상태를 나타내는 값이다.
     """
@@ -9,6 +10,7 @@ class TradeState(Enum):
     SELL_UNFILLED = "매도 미체결"
     AVERAGING_DOWN = "물타기 진행"
     COMPLETED = "매도 완료"
+
 
 class OrderState(Enum):
     """주문 상태를 나타내는 값이다.

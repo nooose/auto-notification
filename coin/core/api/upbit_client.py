@@ -5,12 +5,13 @@ import uuid
 from urllib.parse import urlencode, unquote
 from typing import Dict, List
 
-from data.account import Account
-from data.candle import Candle
-from data.trade_states import OrderState
-from envrionment import Environment
+from core.data.account import Account
+from core.data.candle import Candle
+from core.data.trade_states import OrderState
+from core.support.envrionment import Environment
 
 API_ENDPOINT = 'https://api.upbit.com'
+
 
 def make_query_hash(params: Dict) -> str:
     """업비트 API 요청에 사용되는 query_hash를 생성한다.
@@ -27,8 +28,10 @@ def make_query_hash(params: Dict) -> str:
     message.update(query_string)
     return message.hexdigest()
 
+
 class UpbitClient:
     """업비트 API 클라이언트
+    - https://docs.upbit.com/ 참고
     """
 
     market: str
@@ -168,7 +171,7 @@ class UpbitClient:
         params = {
             'uuid': [find_uuid]
         }
-        
+
         payload = {
             'access_key': self.access_key,
             'nonce': str(uuid.uuid4()),
@@ -185,7 +188,7 @@ class UpbitClient:
         response = requests.get(API_ENDPOINT + '/v1/accounts/v1/order', params=params, headers=headers)
         state = response.json()["state"]
         return OrderState.value_of(state)
-    
+
     def cancel_and_sell_order(self, cancel_uuid: str, new_price: str):
         """기존 주문을 취소하고, 새로운 주문을 실행한다.
         
