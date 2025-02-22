@@ -10,8 +10,6 @@ from core.data.candle import Candle
 from core.data.trade_states import OrderState
 from core.support.envrionment import Environment
 
-API_ENDPOINT = 'https://api.upbit.com'
-
 
 def make_query_hash(params: Dict) -> str:
     """업비트 API 요청에 사용되는 query_hash를 생성한다.
@@ -31,11 +29,10 @@ def make_query_hash(params: Dict) -> str:
 
 class UpbitClient:
     """업비트 API 클라이언트
-    - https://docs.upbit.com/ 참고
+    - https://docs.upbit.com/reference 참고
     """
 
-    market: str
-    env: Environment
+    API_ENDPOINT = 'https://api.upbit.com'
 
     def __init__(self, market: str, env: Environment):
         """UpbitClient 객체를 생성한다.
@@ -59,7 +56,7 @@ class UpbitClient:
             List[Candle]: 캔들 목록
         """
 
-        url = API_ENDPOINT + '/v1/candles/minutes/5'
+        url = self.API_ENDPOINT + '/v1/candles/minutes/5'
         params = {
             'market': self.market,
             'count': count,
@@ -78,6 +75,7 @@ class UpbitClient:
         Returns:
             str: 주문 UUID
         """
+        url = self.API_ENDPOINT + '/v1/orders'
 
         # TODO: volume 으로 구매할 때 지정가(limit)이 아닌 시장가 주문(price)으로 해야하는지?
         params = {
@@ -100,7 +98,7 @@ class UpbitClient:
             'Authorization': authorization,
         }
 
-        response = requests.post(API_ENDPOINT + '/v1/orders', json=params, headers=headers)
+        response = requests.post(url, json=params, headers=headers)
         return response.json()["uuid"]
 
     def place_sell_order(self, volume: str) -> str:
@@ -112,6 +110,7 @@ class UpbitClient:
         Returns:
             str : 주문 UUID
         """
+        url = self.API_ENDPOINT + '/v1/orders'
 
         params = {
             'market': self.market,
@@ -133,7 +132,7 @@ class UpbitClient:
             'Authorization': authorization,
         }
 
-        response = requests.post(API_ENDPOINT + '/v1/orders', json=params, headers=headers)
+        response = requests.post(url, json=params, headers=headers)
         return response.json()["uuid"]
 
     def get_my_account(self) -> List[Account]:
@@ -142,6 +141,7 @@ class UpbitClient:
         Returns:
             List[Account]: 내 계좌 정보
         """
+        url = self.API_ENDPOINT + '/v1/accounts'
 
         payload = {
             'access_key': self.access_key,
@@ -154,22 +154,23 @@ class UpbitClient:
             'Authorization': authorization,
         }
 
-        response = requests.get(API_ENDPOINT + '/v1/accounts', headers=headers)
+        response = requests.get(url, headers=headers)
         accounts = response.json()
         return [Account.from_response(data) for data in accounts]
 
-    def get_order(self, find_uuid: str) -> OrderState:
+    def get_order(self, request_uuid: str) -> OrderState:
         """주문 정보를 가져온다.
 
         Args:
-            find_uuid (str): 주문 UUID
+            request_uuid (str): 주문 UUID
         
         Returns:
             str: 주문 상태('wait', 'done')
         """
+        url = self.API_ENDPOINT + '/v1/accounts/v1/order'
 
         params = {
-            'uuid': [find_uuid]
+            'uuid': [request_uuid]
         }
 
         payload = {
@@ -185,7 +186,7 @@ class UpbitClient:
             'Authorization': authorization,
         }
 
-        response = requests.get(API_ENDPOINT + '/v1/accounts/v1/order', params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers)
         state = response.json()["state"]
         return OrderState.value_of(state)
 
@@ -196,6 +197,7 @@ class UpbitClient:
             cancel_uuid (str): 취소할 주문 UUID
             new_price (str): 새로운 주문 가격
         """
+        url = self.API_ENDPOINT + '/v1/orders/cancel_and_new'
 
         params = {
             'prev_order_uuid': cancel_uuid,
@@ -217,5 +219,28 @@ class UpbitClient:
             'Authorization': authorization,
         }
 
-        response = requests.post(API_ENDPOINT + '/v1/orders/cancel_and_new', json=params, headers=headers)
+        response = requests.post(url, json=params, headers=headers)
         return response.json()["uuid"]
+
+    def cancel_order(self, request_uuid: str):
+        url = self.API_ENDPOINT + '/v1/order'
+
+        params = {
+            'uuid': request_uuid
+        }
+
+        payload = {
+            'access_key': self.access_key,
+            'nonce': str(uuid.uuid4()),
+            'query_hash': make_query_hash(params),
+            'query_hash_alg': 'SHA512',
+        }
+
+        jwt_token = jwt.encode(payload, self.secret_key)
+        authorization = 'Bearer {}'.format(jwt_token)
+        headers = {
+            'Authorization': authorization,
+        }
+
+        response = requests.delete(url, params=params, headers=headers)
+        response.json()
