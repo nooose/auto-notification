@@ -30,4 +30,3 @@ def extract_text(image_path):
 
 if __name__ == "__main__":
     extract_text("kakao.jpeg")
-

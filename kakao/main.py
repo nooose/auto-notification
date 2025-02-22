@@ -45,4 +45,3 @@ thread_3_obj.start()
 thread_1_obj.join()
 thread_2_obj.join()
 thread_3_obj.join()
-
