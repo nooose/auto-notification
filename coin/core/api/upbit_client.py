@@ -5,10 +5,11 @@ import uuid
 from urllib.parse import urlencode, unquote
 from typing import Dict, List
 
+from core.api.upbit_properties import UpbitProperties
 from core.data.account import Account
 from core.data.candle import Candle
 from core.data.trade_states import OrderState
-from core.support.envrionment import Environment
+from core.support.envrionments import Environments
 
 
 def make_query_hash(params: Dict) -> str:
@@ -32,19 +33,19 @@ class UpbitClient:
     - https://docs.upbit.com/reference 참고
     """
 
-    API_ENDPOINT = 'https://api.upbit.com'
-
-    def __init__(self, market: str, env: Environment):
+    def __init__(self, market: str, properties: UpbitProperties):
         """UpbitClient 객체를 생성한다.
         
         Args:
             market (str): 클라이언트에서 다룰 코인
-            env (Environment): 환경 변수 객체
+            properties (UpbitProperties): 프로퍼티
         """
 
+        self.API_ENDPOINT = 'https://api.upbit.com'
+        self.access_key = properties.access_key
+        self.secret_key = properties.secret_key
         self.market: str = market
-        self.access_key: str = env.get("UPBIT_ACCESS_KEY")
-        self.secret_key: str = env.get("UPBIT_SECRET_KEY")
+
 
     def get_recent_candles(self, count: int) -> List[Candle]:
         """실시간 5분봉 캔들 목록을 가져온다.
