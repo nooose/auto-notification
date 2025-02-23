@@ -12,8 +12,9 @@ from core.support.envrionments import Environments
 INTERVAL = 0.1
 COIN_MARKET = "KRW-XRP"
 DEFAULT_MARGIN = 8
-DEFAULT_VOLUME = "24"
+DEFAULT_VOLUME = "2"
 
+DEBUG = False
 
 def main():
     upbit_properties = UpbitProperties(
@@ -37,12 +38,17 @@ def main():
         telegram_client=telegram_client,
     )
 
-    # TODO: 예외 발생 시 예외 로직 처리
+    if DEBUG:
+        print(upbit_client.get_my_account())
+        return
+
     while True:
         try:
             trader.trading()
         except Exception as e:
             print(f"에러: {e}")
+            live_candle = upbit_client.get_recent_candles(1)[0]
+            trader.sell_completed(live_candle)
             traceback.print_exc()
 
         time.sleep(INTERVAL)

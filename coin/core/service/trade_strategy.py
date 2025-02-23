@@ -24,7 +24,7 @@ class TradeStrategy:
         """
 
         recent_candles = candles[1:]
-        return len(recent_candles) == 4 and all(candle.is_blue_candle() for candle in recent_candles)
+        return len(recent_candles) == 3 and all(candle.is_blue_candle() for candle in recent_candles)
 
     def should_sell(self, average_price: float, current_price: float) -> SellDecision:
         """DCA 중 매도 여부를 결정한다.

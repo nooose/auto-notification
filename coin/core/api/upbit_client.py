@@ -60,21 +60,22 @@ class UpbitClient:
         response = requests.get(url, params=params, headers=headers).json()
         return [Candle.from_response(data) for data in response]
 
-    def place_buy_order(self, volume: str) -> str:
+    def place_buy_order(self, volume: str, price: float) -> str:
         """매수 주문을 한다.
 
         :param volume: 주문 수량
+        :param price: 주문 가격
         :return: 주문 UUID
         """
 
         url = self.API_ENDPOINT + '/v1/orders'
 
-        # TODO: volume 으로 구매할 때 지정가(limit)이 아닌 시장가 주문(price)으로 해야하는지?
         params = {
             'market': self.market,
             'side': 'bid',
             'ord_type': 'limit',
             'volume': volume,
+            'price': str(price),
         }
 
         payload = {
@@ -93,10 +94,11 @@ class UpbitClient:
         response = requests.post(url, json=params, headers=headers)
         return response.json()["uuid"]
 
-    def place_sell_order(self, volume: str) -> str:
+    def place_sell_order(self, volume: str, price: float) -> str:
         """매도 주문을 한다.
 
         :param volume: 주문 수량
+        :param price: 주문 가격
         :return: 주문 UUID
         """
 
@@ -107,6 +109,7 @@ class UpbitClient:
             'side': 'ask',
             'ord_type': 'limit',
             'volume': volume,
+            'price': str(price),
         }
 
         payload = {
@@ -125,7 +128,7 @@ class UpbitClient:
         response = requests.post(url, json=params, headers=headers)
         return response.json()["uuid"]
 
-    def get_my_account(self) -> List[Account]:
+    def get_my_account(self) -> Account:
         """내 계좌 정보를 가져온다.
 
         :return: 계좌 정보 목록
@@ -144,8 +147,11 @@ class UpbitClient:
         }
 
         response = requests.get(url, headers=headers)
-        accounts = response.json()
-        return [Account.from_response(data) for data in accounts]
+        json = response.json()
+        accounts = [Account.from_response(data) for data in json]
+
+        coin = self.market.split("-")[1]
+        return next((account for account in accounts if account.currency == coin), None)
 
     def get_order(self, request_uuid: str) -> OrderState:
         """주문 정보를 가져온다.
