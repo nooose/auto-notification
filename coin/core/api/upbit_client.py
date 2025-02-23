@@ -8,7 +8,7 @@ from typing import Dict, List
 from core.api.upbit_properties import UpbitProperties
 from core.data.account import Account
 from core.data.candle import Candle
-from core.data.trade_states import OrderState
+from core.data.states import OrderState
 
 
 def make_query_hash(params: Dict) -> str:

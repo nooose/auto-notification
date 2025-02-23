@@ -5,10 +5,12 @@ from core.api.telegram_properties import TelegramProperties
 from core.api.upbit_client import UpbitClient
 from core.api.upbit_properties import UpbitProperties
 from core.service.auto_trader import AutoTrader
+from core.service.trade_strategy import TradeStrategy
 from core.support.envrionments import Environments
 
 INTERVAL = 0.1
 COIN_MARKET = "KRW-XRP"
+DEFAULT_MARGIN = 8
 DEFAULT_VOLUME = "24"
 
 
@@ -25,12 +27,19 @@ def main():
     )
     telegram_client = TelegramClient(properties=telegram_properties)
 
-    trader = AutoTrader(DEFAULT_VOLUME, upbit_client, telegram_client)
+    strategy = TradeStrategy(margin=DEFAULT_MARGIN)
+    trader = AutoTrader(
+        margin=DEFAULT_MARGIN,
+        volume=DEFAULT_VOLUME,
+        strategy=strategy,
+        upbit_client=upbit_client,
+        telegram_client=telegram_client,
+    )
 
     # TODO: 예외 발생 시 예외 로직 처리
     while True:
         try:
-            trader.start_trading()
+            trader.trading()
         except Exception as e:
             print(f"에러: {e}")
 
