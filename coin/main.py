@@ -1,4 +1,5 @@
 import time
+import traceback
 
 from core.api.telegram_client import TelegramClient
 from core.api.telegram_properties import TelegramProperties
@@ -42,9 +43,9 @@ def main():
             trader.trading()
         except Exception as e:
             print(f"에러: {e}")
+            traceback.print_exc()
 
         time.sleep(INTERVAL)
-
 
 if __name__ == "__main__":
     main()
