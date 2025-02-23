@@ -75,7 +75,7 @@ class UpbitClient:
             'side': 'bid',
             'ord_type': 'limit',
             'volume': volume,
-            'price': str(price),
+            'price': str(round(price)),
         }
 
         payload = {
@@ -109,7 +109,7 @@ class UpbitClient:
             'side': 'ask',
             'ord_type': 'limit',
             'volume': volume,
-            'price': str(price),
+            'price': str(round(price)),
         }
 
         payload = {
@@ -126,6 +126,7 @@ class UpbitClient:
         }
 
         response = requests.post(url, json=params, headers=headers)
+        print(response.json())
         return response.json()["uuid"]
 
     def get_my_account(self) -> Account:

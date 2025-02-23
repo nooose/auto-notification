@@ -16,7 +16,7 @@ class TelegramClient:
         self.bot_token: str = properties.bot_token
         self.chat_id: str = properties.chat_id
 
-    async def send_message(self, message):
+    def send_message(self, message):
         """
         메시지를 비동기로 전송한다.
 

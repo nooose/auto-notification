@@ -11,7 +11,7 @@ from core.support.envrionments import Environments
 
 INTERVAL = 0.1
 COIN_MARKET = "KRW-XRP"
-DEFAULT_MARGIN = 8
+DEFAULT_MARGIN = 8.0
 DEFAULT_VOLUME = "2"
 
 DEBUG = False

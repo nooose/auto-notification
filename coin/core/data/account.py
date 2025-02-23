@@ -23,9 +23,9 @@ class Account:
         """
         return Account(
             currency=data["currency"],
-            balance=data["balance"],
+            balance=float(data["balance"]),
             locked=data["locked"],
-            avg_buy_price=data["avg_buy_price"],
+            avg_buy_price=float(data["avg_buy_price"]),
             avg_buy_price_modified=data["avg_buy_price_modified"],
             unit_currency=data["unit_currency"],
         )

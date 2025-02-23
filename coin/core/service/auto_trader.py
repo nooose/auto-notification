@@ -15,7 +15,7 @@ class AutoTrader:
 
     # TODO: 잔고에 금액이 있는지 유효성 체크 필요
     def __init__(self,
-                 margin: int,
+                 margin: float,
                  volume: str,
                  strategy: TradeStrategy,
                  upbit_client: UpbitClient,

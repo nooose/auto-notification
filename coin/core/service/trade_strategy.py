@@ -7,13 +7,13 @@ class TradeStrategy:
     """매매 전략을 책임지는 클래스.
     """
 
-    def __init__(self, margin: int):
+    def __init__(self, margin: float):
         """매매 전략 생성자
 
         :param margin: 거래 당 최소 수익 금액
         """
 
-        self.detection_margin = margin - 2
+        self.detection_margin = margin - 2.0
 
     @staticmethod
     def should_buy(candles: List[Candle]) -> bool:
