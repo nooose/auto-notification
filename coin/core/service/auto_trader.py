@@ -10,12 +10,13 @@ KST = timezone(timedelta(hours=9))
 
 
 def now_kst() -> datetime:
-    """현재 한국 시간(KST)을 반환한다."""
+    """현재 한국 시간(KST)을 반환한다.
+    """
     return datetime.now(KST)
 
 
 class AutoTrader:
-    """실 거래를 수행하는 클래스이다.
+    """자동 거래를 수행하는 클래스이다.
     """
 
     MARGIN = 8
@@ -23,11 +24,10 @@ class AutoTrader:
 
     # TODO: 잔고에 금액이 있는지 유효성 체크 필요
     def __init__(self, volume: str, upbit_client: UpbitClient, telegram_client: TelegramClient):
-        """Trader 객체를 생성한다.
+        """객체를 생성한다.
 
-        Args:
-            volume (str): 기본 거래 수량
-            upbit_client (UpbitClient): 업비트 클라이언트
+        :param volume: 기본 거래 수량
+        :param upbit_client: 업비트 API 클라이언트
         """
 
         self.volume = volume
@@ -62,11 +62,10 @@ class AutoTrader:
     def _attempt_buy(self, candles: List[Candle]):
         """최근 캔들 목록을 기반으로 매수 주문을 시도한다.
 
-        - 상태가 초기일 때 또는 매도가 완료되었을 때 실행된다.
-        - 매수 조건을 만족하면 매수를 진행하고, 매도 주문을 설정한다.
+        - 초기 상태 또는 매도가 완료되었을 때 실행된다.
+        - 매수 조건을 만족하면 매수를 진행하고, 매도 주문을 한다.
 
-        Args:
-            candles (List[Candle]): 최근 캔들 목록
+        :param candles: 최근 갠들 목록
         """
 
         print("구매를 시도한다.")
@@ -84,11 +83,8 @@ class AutoTrader:
     def _should_buy(self, candles: List[Candle]) -> bool:
         """최근 캔들을 보고 매수 여부를 결정한다.
 
-        Args:
-            candles (List[Candle]): 최근 캔들 목록
-
-        Returns:
-            bool: 매수 여부 (True: 매수, False: 매수 안 함)
+        :param candles: 최근 캔들 목록
+        :return: 매수 여부
         """
 
         if any(candle.candle_date_time_kst == self.completed_candle_time for candle in candles):
@@ -100,16 +96,20 @@ class AutoTrader:
         return len(recent_candles) == 4 and all(candle.is_blue_candle() for candle in recent_candles)
 
     def _set_buy_info(self, candle: Candle, uuid: str):
-        """매수 정보를 설정하고 매도 마감 기한을 지정한다."""
+        """매수 정보를 설정한다.
+
+        :param candle: 주문이 완료된 시점의 캔들 객체
+        :param uuid: 매수 주문 UUID
+        """
         self.buy_time = candle.candle_date_time_kst
         self.last_order_uuid = uuid
 
     def _average_down(self, candles: List[Candle]):
         """평단가를 내리기 위해 물타기를 진행한다.
+
         - 상태가 매도 미체결일 때 실행된다.
 
-        Args:
-            candles (List[Candle]): 최근 캔들 목록
+        :param candles: 최근 캔들 목록
         """
 
         live_candle = candles[0]
@@ -121,10 +121,10 @@ class AutoTrader:
 
     def _check_averaging_status(self, candles: List[Candle]):
         """물타기 상태에서 매수/매도 전략을 펼친다.
+
         - 상태가 물타기 진행 중일 때 실행된다.
 
-        Args:
-            candles (List[Candle]): 최근 캔들 목록
+        :param candles: 최근 캔들 목록
         """
 
         # 현재가를 계속 확인하면서 매도 주문 및 손절가 설정
@@ -157,8 +157,8 @@ class AutoTrader:
 
     def _check_sell_status(self, candles: List[Candle]):
         """현재 매도 상태를 확인하여 상태를 변경한다.
-        Args:
-            candles (List[Candle]): 최근 캔들 목록
+
+        :param candles: 최근 캔들 목록
         """
 
         if (self.buy_time is None or
@@ -178,10 +178,20 @@ class AutoTrader:
             self._change_state(TradeState.SELL_UNFILLED)
 
     def _complete(self, candle: Candle):
+        """매도 체결을 완료한다.
+
+        :param candle: 매도가 체결된 시점의 캔들 객체
+        """
+
         self.completed_candle_time = candle.candle_date_time_kst
         self._change_state(TradeState.COMPLETED)
         self.last_order_uuid = None
         self.buy_time = None
 
     def _change_state(self, state: TradeState):
+        """ 거래 상태를 변경한다.
+
+        :param state: 거래 상태
+        """
+
         self.state = state

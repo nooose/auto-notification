@@ -5,7 +5,7 @@ from typing import Dict
 
 @dataclass
 class Candle:
-    """캔들 정보를 담는 값 클래스
+    """캔들 정보 값 클래스
     """
 
     market: str
@@ -22,11 +22,10 @@ class Candle:
 
     @staticmethod
     def from_response(data: Dict) -> "Candle":
-        """API 응답 데이터로부터 Candle 객체를 생성한다.
-        Args:
-            data (Dict): API 응답 데이터
-        Returns:
-            Candle: Candle 객체
+        """API 응답 데이터로부터 캔들 객체를 생성한다.
+
+        :param data: API 응답 딕셔너리
+        :return: 캔들 객체
         """
         return Candle(
             market=data["market"],

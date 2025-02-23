@@ -10,14 +10,18 @@ class TelegramClient:
     def __init__(self, properties: TelegramProperties):
         """TelegramClient 객체를 생성한다.
 
-        Args:
-            properties (TelegramProperties): 프로퍼티
+        :param properties: 텔레그램 프로퍼티
         """
 
         self.bot_token: str = properties.bot_token
         self.chat_id: str = properties.chat_id
 
     async def send_message(self, message):
+        """
+        메시지를 비동기로 전송한다.
+
+        :param message: 채널에 전달할 메시지
+        """
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
         payload = {
             "chat_id": self.chat_id,

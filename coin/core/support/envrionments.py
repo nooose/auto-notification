@@ -11,7 +11,11 @@ class Environments:
 
     @staticmethod
     def _load_env(env_path=None):
-        """환경 변수를 로드하는 메서드"""
+        """환경 변수를 불러온다.
+
+        :param env_path: ``.env`` 파일 경로
+        :raise FileNotFoundError: ``.env`` 파일이 없으면 발생할 수 있다.
+        """
         if not env_path:
             env_path = Path.cwd() / '.env'
 
@@ -22,7 +26,13 @@ class Environments:
 
     @staticmethod
     def get(key, default=None) -> str:
-        """환경 변수를 가져온다."""
+        """환경 변수 값을 불러온다.
+
+        :param key: 환경변수 키
+        :param default: 키가 존재하지 않을 때 기본 값
+        :return: 환경변수 값
+        :raise SystemExit: 환경변수를 불러오지 못하면 발생할 수 있다.
+        """
 
         if not Environments._env_loaded:
             try:

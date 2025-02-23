@@ -16,11 +16,10 @@ class Account:
 
     @staticmethod
     def from_response(data: Dict) -> "Account":
-        """API 응답 데이터로부터 Account 객체를 생성한다.
-        Args:
-            data (Dict): API 응답 데이터
-        Returns:
-            Account: Account 객체
+        """API 응답 데이터로부터 계좌 객체를 생성한다.
+
+        :param data: API 응답 딕셔너리
+        :return: 계좌 객체
         """
         return Account(
             currency=data["currency"],

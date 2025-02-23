@@ -21,8 +21,14 @@ class OrderState(Enum):
 
     @staticmethod
     def value_of(value: str) -> "OrderState":
-        """문자열을 OrderState로 변환한다."""
+        """문자열을 주문 상태로 변환한다.
+
+        :param value 주문 상태 문자열
+        :return: 주문 상태 값
+        :raise ValueError: 일치하는 주문 상태가 없으면 발생할 수 있다.
+        """
+
         try:
             return OrderState[value.upper()]
         except KeyError:
-            raise ValueError(f"Invalid order state: {value}")  # 예외 처리
+            raise ValueError(f"일치하는 주문 상태가 없습니다: {value}")
