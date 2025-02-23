@@ -15,7 +15,9 @@ class OrderState(Enum):
     """주문 상태를 나타내는 값이다.
     """
 
-    WAIT = "주문 대기"
+    WAIT = "체결 대기"
+    WATCH = "예약 주문 대기"
+    CANCEL = "주문 취소"
     DONE = "주문 완료"
 
     @staticmethod
