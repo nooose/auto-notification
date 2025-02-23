@@ -50,7 +50,7 @@ def main():
             live_candle = upbit_client.get_recent_candles(1)[0]
             trader.sell_completed(live_candle)
             traceback.print_exc()
-
+            telegram_client.send_message(f"에러 발생 - {e}")
         time.sleep(INTERVAL)
 
 if __name__ == "__main__":
