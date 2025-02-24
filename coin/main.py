@@ -1,6 +1,5 @@
 import time
 import traceback
-import threading
 from core.api.telegram_client import TelegramClient
 from core.api.telegram_properties import TelegramProperties
 from core.api.upbit_client import UpbitClient

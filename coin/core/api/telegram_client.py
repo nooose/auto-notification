@@ -1,6 +1,5 @@
 from typing import Dict
 
-import threading
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from core.api.telegram_properties import TelegramProperties
