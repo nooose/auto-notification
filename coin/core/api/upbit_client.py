@@ -160,7 +160,7 @@ class UpbitClient:
         :param request_uuid: 주문 UUID
         :return: 주문 상태
         """
-        url = self.API_ENDPOINT + '/v1/accounts/v1/order'
+        url = self.API_ENDPOINT + '/v1/order'
 
         params = {
             'uuid': [request_uuid]
@@ -180,6 +180,7 @@ class UpbitClient:
         }
 
         response = requests.get(url, params=params, headers=headers)
+        print(response.json())
         state = response.json()["state"]
         return OrderState.value_of(state)
 
