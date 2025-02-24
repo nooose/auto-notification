@@ -10,6 +10,9 @@ from core.data.states import TradeState, OrderState, SellDecision
 from core.service.trade_strategy import TradeStrategy
 from core.support.time_utils import now_kst
 
+손절_레버리지 = 2.0
+
+
 class AutoTrader:
     """자동 거래를 수행하는 클래스이다.
     """
@@ -79,7 +82,7 @@ class AutoTrader:
         if self.state == TradeState.DCA_BUY_COMPLETED and self.is_order_done(self.last_buy_order_uuid):
             self.upbit_client.cancel_order(self.last_sell_order_uuid)
             account = self._my_account()
-            self._sell(volume=str(account.balance), price=account.avg_buy_price)
+            self._sell(volume=str(account.balance), price=account.avg_buy_price + 손절_레버리지)
             self.state = TradeState.DCA_SELL_ORDER_COMPLETED
             message = f"[자동] 물타기 매도 주문 완료 {round(account.avg_buy_price)}원"
             logging.info(message)
