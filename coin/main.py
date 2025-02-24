@@ -1,6 +1,6 @@
 import time
 import traceback
-
+import threading
 from core.api.telegram_client import TelegramClient
 from core.api.telegram_properties import TelegramProperties
 from core.api.upbit_client import UpbitClient
@@ -38,11 +38,10 @@ def main():
         telegram_client=telegram_client,
     )
 
-    if DEBUG:
-        print(upbit_client.get_my_account())
+    if DEBUG: 
         return
 
-    while True:
+    while True and not DEBUG:
         try:
             trader.trading()
         except Exception as e:
@@ -50,7 +49,7 @@ def main():
             live_candle = upbit_client.get_recent_candles(1)[0]
             trader.sell_completed(live_candle)
             traceback.print_exc()
-            telegram_client.send_message(f"에러 발생 - {e}")
+            telegram_client.async_send_message(f"에러 발생 - {e}")
         time.sleep(INTERVAL)
 
 if __name__ == "__main__":
