@@ -1,5 +1,9 @@
 import time
 import traceback
+import os
+import logging
+from logging.handlers import TimedRotatingFileHandler
+
 from core.api.telegram_client import TelegramClient
 from core.api.telegram_properties import TelegramProperties
 from core.api.upbit_client import UpbitClient
@@ -37,10 +41,7 @@ def main():
         telegram_client=telegram_client,
     )
 
-    if DEBUG: 
-        return
-
-    while True and not DEBUG:
+    while not DEBUG:
         try:
             trader.trading()
         except Exception as e:
@@ -51,5 +52,27 @@ def main():
             telegram_client.async_send_message(f"에러 발생 - {e}")
         time.sleep(INTERVAL)
 
+def _setup_logger():
+    """로깅 설정
+    """
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    LOG_DIR = os.path.join(BASE_DIR, "logs")
+    os.makedirs(LOG_DIR, exist_ok=True)
+
+    log_file = os.path.join(LOG_DIR, "output.log")
+
+    handler = TimedRotatingFileHandler(
+        log_file, when="midnight", interval=1, backupCount=7, encoding="utf-8"
+    )
+
+    logging.basicConfig(
+        handlers=[handler],
+        level=logging.INFO,
+        format="%(asctime)s - %(message)s"
+    )
+
+
 if __name__ == "__main__":
+    _setup_logger()
     main()
