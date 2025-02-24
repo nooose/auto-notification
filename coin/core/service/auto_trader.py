@@ -66,7 +66,7 @@ class AutoTrader:
             market_price = live_candle.trade_price
             decision = self.strategy.should_sell(average_price=avg_buy_price, current_price=market_price)
             if decision == SellDecision.CUT_LOSS:
-                target_price = avg_buy_price - self.margin
+                target_price = round(avg_buy_price - self.margin)
                 self._buy(target_price)
                 self.telegram_client.send_message(f"[자동] 물타기 매수 주문 완료 {target_price}원")
                 self.state = TradeState.DCA_BUY_COMPLETED
@@ -92,17 +92,27 @@ class AutoTrader:
             return
 
         live_candle = candles[0]
+<<<<<<< HEAD
         opening_price = live_candle.opening_price + 1.0
         self._buy(opening_price)
+=======
+        opening_price = live_candle.opening_price
+        target_buy_price = round(opening_price + 1.0)
+        self._buy(target_buy_price)
+>>>>>>> 12b9fb9 (fix: 잘못된  알림 메시지 수정)
         self.buy_time = live_candle.candle_date_time_kst
 
         avg_price = self._my_account().avg_buy_price
-        target_price = avg_price + self.margin
-        self._sell(self.volume, target_price)
+        target_sell_price = round(avg_price + self.margin)
+        self._sell(self.volume, target_sell_price)
 
         self._change_state(TradeState.DCA)
+<<<<<<< HEAD
         self.telegram_client.send_message(f"[자동] 매수 주문 완료 {opening_price}({self.volume}개)")
         self.telegram_client.send_message(f"[자동] 매도 주문 완료 {target_price}({self.volume}개)")
+=======
+        self.telegram_client.send_message(f"[자동] 주문 완료 매수: {target_buy_price}({self.volume}개), 매도: {target_sell_price}")
+>>>>>>> 12b9fb9 (fix: 잘못된  알림 메시지 수정)
 
     def _should_buy(self, candles: List[Candle]) -> bool:
         """최근 캔들을 보고 매수 여부를 결정한다.
