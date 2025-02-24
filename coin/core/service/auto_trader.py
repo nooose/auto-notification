@@ -190,9 +190,13 @@ class AutoTrader:
     def sell_completed(self, candle: Candle):
         """매도 체결을 완료한다.
 
+        - 매도가 완료되면 걸려있던 매수 주문을 취소한다.
         :param candle: 체결된 시점의 캔들 객체
         """
 
         self.completed_candle_time = candle.candle_date_time_kst
         self._change_state(TradeState.COMPLETED)
         self.last_sell_order_uuid = None
+
+        if self.last_buy_order_uuid is not None:
+            self.upbit_client.cancel_order(self.last_buy_order_uuid)
