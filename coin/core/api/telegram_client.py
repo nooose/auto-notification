@@ -1,4 +1,7 @@
 from typing import Dict
+
+import asyncio
+import aiohttp
 import requests
 
 from core.api.telegram_properties import TelegramProperties
@@ -23,13 +26,16 @@ class TelegramClient:
         """동기 코드에서 비동기 메시지 전송을 호출하는 래퍼
         """
 
-        asyncio.get_event_loop().create_task(self._async_send_message(message))
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(self._async_send_message(message))
+        except RuntimeError:
+            asyncio.run(self._async_send_message(message))
 
     async def _async_send_message(self, message):
         """텔레그램에 비동기로 메시지를 전송한다.
 
         :param message: 전송할 메시지
-        :return:
         """
 
         payload = self._create_payload(message)
@@ -38,6 +44,7 @@ class TelegramClient:
                 async with session.post(self.url, data=payload) as response:
                     if response.status != 200:
                         raise aiohttp.ClientResponseError(response.request_info, response.history, status=response.status)
+                    print(f"비동기 텔레그램 메시지 전송 성공: {message}")
         except aiohttp.ClientError as e:
             print(f"비동기 텔레그램 메시지 전송 실패: {e}")
 
@@ -45,7 +52,6 @@ class TelegramClient:
         """텔레그램에 메시지를 전송한다.
 
         :param message: 전송할 메시지
-        :return:
         """
                 
         payload = self._create_payload(message)
