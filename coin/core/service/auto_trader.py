@@ -57,7 +57,7 @@ class AutoTrader:
 
         if self.is_order_done(uuid=self.last_sell_order_uuid):
             self.sell_completed(candle=live_candle)
-            self.telegram_client.send_message("[자동] 매도 체결 완료")
+            self.telegram_client.async_send_message("[자동] 매도 체결 완료")
             return
 
         if self.state == TradeState.DCA:
@@ -68,7 +68,7 @@ class AutoTrader:
             if decision == SellDecision.CUT_LOSS:
                 target_price = round(avg_buy_price - self.margin)
                 self._buy(target_price)
-                self.telegram_client.send_message(f"[자동] 물타기 매수 주문 완료 {target_price}원")
+                self.telegram_client.async_send_message(f"[자동] 물타기 매수 주문 완료 {target_price}원")
                 self.state = TradeState.DCA_BUY_COMPLETED
                 return
 
@@ -77,7 +77,7 @@ class AutoTrader:
             account = self._my_account()
             self._sell(volume=str(account.balance), price=account.avg_buy_price)
             self.state = TradeState.DCA_SELL_ORDER_COMPLETED
-            self.telegram_client.send_message(f"[자동] 물타기 매도 주문 완료 {round(account.avg_buy_price)}원")
+            self.telegram_client.async_send_message(f"[자동] 물타기 매도 주문 완료 {round(account.avg_buy_price)}원")
 
     def _attempt_buy(self, candles: List[Candle]):
         """최근 캔들 목록을 기반으로 매수 주문을 시도한다.
@@ -102,7 +102,7 @@ class AutoTrader:
         self._sell(self.volume, target_sell_price)
 
         self._change_state(TradeState.DCA)
-        self.telegram_client.send_message(f"[자동] 주문 완료 매수: {target_buy_price}({self.volume}개), 매도: {target_sell_price}")
+        self.telegram_client.async_send_message(f"[자동] 주문 완료 매수: {target_buy_price}({self.volume}개), 매도: {target_sell_price}")
 
     def _should_buy(self, candles: List[Candle]) -> bool:
         """최근 캔들을 보고 매수 여부를 결정한다.

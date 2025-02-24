@@ -38,7 +38,6 @@ class TelegramClient:
                 async with session.post(self.url, data=payload) as response:
                     if response.status != 200:
                         raise aiohttp.ClientResponseError(response.request_info, response.history, status=response.status)
-                    print(f"비동기 메시지 전송 성공: {message}")
         except aiohttp.ClientError as e:
             print(f"비동기 텔레그램 메시지 전송 실패: {e}")
 
