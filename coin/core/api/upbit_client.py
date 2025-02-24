@@ -126,7 +126,6 @@ class UpbitClient:
         }
 
         response = requests.post(url, json=params, headers=headers)
-        print(response.json())
         return response.json()["uuid"]
 
     def get_my_account(self) -> Account:
@@ -180,7 +179,6 @@ class UpbitClient:
         }
 
         response = requests.get(url, params=params, headers=headers)
-        print(response.json())
         state = response.json()["state"]
         return OrderState.value_of(state)
 

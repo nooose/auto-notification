@@ -1,3 +1,4 @@
+import time
 from typing import List, Optional
 from datetime import datetime
 
@@ -94,15 +95,17 @@ class AutoTrader:
         live_candle = candles[0]
         opening_price = live_candle.opening_price
         target_buy_price = round(opening_price + 1.0)
-        self._buy(target_buy_price)
+        buy_uuid = self._buy(target_buy_price)
         self.buy_time = live_candle.candle_date_time_kst
+
+        self.wait_until_order_done(uuid=buy_uuid)
 
         avg_price = self._my_account().avg_buy_price
         target_sell_price = round(avg_price + self.margin)
         self._sell(self.volume, target_sell_price)
 
         self._change_state(TradeState.DCA)
-        self.telegram_client.send_message(f"[자동] 주문 완료 매수: {target_buy_price}({self.volume}개), 매도: {target_sell_price}")
+        self.telegram_client.send_message(f"[자동] 주문 완료 매수: {avg_price}({self.volume}개), 매도: {target_sell_price}")
 
     def _should_buy(self, candles: List[Candle]) -> bool:
         """최근 캔들을 보고 매수 여부를 결정한다.
@@ -116,6 +119,14 @@ class AutoTrader:
 
         return self.strategy.should_buy(candles)
 
+    def wait_until_order_done(self, uuid: str):
+        """주문이 완료될 때까지 대기한다.
+
+        :param uuid: 주문 UUID
+        """
+
+        while not self.is_order_done(uuid):
+            time.sleep(0.1)
 
     def _my_account(self):
         """나의 계좌를 조회한다.
