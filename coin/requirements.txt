@@ -1,3 +1,5 @@
 python-dotenv
 PyJWT
 requests
+aiohttp
+asyncio
