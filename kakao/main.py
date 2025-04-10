@@ -1,47 +1,60 @@
-import threading
 import time
+from google_photo_downloader import PhotoDownloader
+from photo_processor import PhotoProcessor
+from ocr import OCRReader
+from data import ExchangeRatePair
+import re
+from telegram_properties import TelegramProperties
+from telegram_client import TelegramClient
+from envrionments import Environments
 
-# 1번 스레드: 매분 30초마다 외부로부터 정보를 가져와 출력
-def thread_1():
-    while True:
-        current_time = time.localtime()
-        if current_time.tm_sec == 30:  # 매분 30초에 출력
-            print("Thread 1: Information fetched at", time.strftime("%H:%M:%S", current_time))
-        time.sleep(1)
+DEBUG = False
 
-# 2번 스레드: 10초마다 계속 정보를 가져와 출력
-def thread_2():
+def toPair(text: str) -> ExchangeRatePair:
+        if DEBUG:
+            print(f"추출 텍스트: {text}")
+
+        amounts = re.findall(r'\d+(?:,\d{3})*(?:\.\d+)+', text)
+        print(f"추출된 금액: {amounts}")
+        filtered_amounts = [
+            float(amount.replace(",", "").replace("1.", "1", 1)) for amount in amounts
+            if 1300 <= float(amount.replace(",", "").replace("1.", "1", 1)) <= 1600
+        ]
+
+        if len(filtered_amounts) < 2:
+            raise ValueError("환율 정보를 파싱할 수 없습니다.")
+
+        switch_one = filtered_amounts[0]
+        kakao = filtered_amounts[-1]
+        return ExchangeRatePair(switch_one=switch_one, kakao=kakao)
+
+if __name__ == "__main__":
+    downloader = PhotoDownloader()
+    processor = PhotoProcessor()
+    ocr_reader = OCRReader()
+
+    telegram_properties = TelegramProperties(
+        bot_token=Environments.get("TELEGRAM_BOT_TOKEN"),
+        chat_id=Environments.get("TELEGRAM_CHAT_ID"),
+    )
+    telegram_client = TelegramClient(telegram_properties)
+
+    previous_pair = None
+
     while True:
-        print("Thread 2: Information fetched")
+        downloader.download_latest_photo(save_as="pre.jpg")
+        processor.preprocess_image(image_path="pre.jpg", output_path="post.jpg")
+        rates_text = ocr_reader.extract_text(image_path="post.jpg")
+        pair = toPair(rates_text)
+
+        if previous_pair == pair:
+            time.sleep(10)
+            continue
+
+        if DEBUG:
+            print(f"환율 정보: {pair}")
+        if (pair.is_switch_one_more_expensive()):
+            message = f"갭 {pair.diff():.2f}원\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
+            telegram_client.send_message(message=message)
+        previous_pair = pair
         time.sleep(10)
-
-# 3번 스레드: 외부 시간 값에 따라 반복 출력
-def thread_3():
-    while True:
-        # 외부값을 여기서 받아옴 (예시: '4' -> 4분)
-        external_time_value = 1
-        interval = external_time_value * 60
-        next_time = time.time() + interval
-        print(f"Thread 3: Starting with external time value: {external_time_value} minutes.")
-
-        while True:
-            current_time = time.time()
-            if current_time >= next_time:
-                print(f"Thread 3: Information fetched at {time.strftime('%H:%M:%S', time.localtime(current_time))}")
-                next_time += interval  # 외부 시간에 맞춰 출력 주기 업데이트
-            time.sleep(1)
-
-# 스레드 생성
-thread_1_obj = threading.Thread(target=thread_1)
-thread_2_obj = threading.Thread(target=thread_2)
-thread_3_obj = threading.Thread(target=thread_3)
-
-# 스레드 시작
-thread_1_obj.start()
-thread_2_obj.start()
-thread_3_obj.start()
-
-# 스레드들이 계속 돌아가게 하기 위해 메인 스레드는 기다림
-thread_1_obj.join()
-thread_2_obj.join()
-thread_3_obj.join()
