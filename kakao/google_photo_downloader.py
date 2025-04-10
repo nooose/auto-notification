@@ -1,4 +1,4 @@
-`import os
+import os
 import requests
 from httplib2 import Http
 from google.oauth2.credentials import Credentials
@@ -20,7 +20,7 @@ class PhotoDownloader:
         if os.path.exists(TOKEN_FILE):
             creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Http())``````````
+            creds.refresh(Http())
             print("토큰 갱신 완료")
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
