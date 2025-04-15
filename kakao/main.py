@@ -7,8 +7,15 @@ import re
 from telegram_properties import TelegramProperties
 from telegram_client import TelegramClient
 from envrionments import Environments
+import argparse
 
-DEBUG = False
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode") # 옵션이 있으면 True, 없으면 False
+    return parser.parse_args()
+
+DEBUG = get_args().debug
+INTERVAL_SECONDS = 10
 
 def toPair(text: str) -> ExchangeRatePair:
     if DEBUG:
@@ -73,7 +80,7 @@ if __name__ == "__main__":
             pair = toPair(rates_text)
 
             if previous_pair == pair:
-                time.sleep(10)
+                time.sleep(INTERVAL_SECONDS)
                 continue
 
             if DEBUG:
@@ -84,4 +91,4 @@ if __name__ == "__main__":
             previous_pair = pair
         except Exception as e:
             print(f"오류 발생: {e}")
-        time.sleep(10)
+        time.sleep(INTERVAL_SECONDS)
