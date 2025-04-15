@@ -9,7 +9,7 @@ class ExchangeRatePair:
         return f"(스위치원={self.switch_one}, 카카오={self.kakao})"
 
     def is_switch_one_more_expensive(self) -> bool:
-        return self.switch_one - self.kakao >= 0.1
+        return self.switch_one - self.kakao >= 1
 
     def diff(self) -> float:
         return abs(self.switch_one - self.kakao)
