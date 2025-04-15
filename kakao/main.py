@@ -8,6 +8,7 @@ from telegram_properties import TelegramProperties
 from telegram_client import TelegramClient
 from envrionments import Environments
 import argparse
+import datetime
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -16,6 +17,10 @@ def get_args():
 
 DEBUG = get_args().debug
 INTERVAL_SECONDS = 10
+
+def extract_interval_text(text: str) -> str:
+    match = re.search(r'(\d+)\s*분', text)
+    return match.group(0) if match else ""
 
 def toPair(text: str) -> ExchangeRatePair:
     if DEBUG:
@@ -70,6 +75,7 @@ if __name__ == "__main__":
     )
     telegram_client = TelegramClient(telegram_properties)
 
+    last_rise_alert_time = None
     previous_pair = None
 
     while True:
@@ -85,9 +91,17 @@ if __name__ == "__main__":
 
             if DEBUG:
                 print(f"환율 정보: {pair}")
+
             if (pair.is_switch_one_more_expensive()):
-                message = f"갭 {pair.diff():.2f}원\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
+                message = f"갭 {pair.diff():.2f}원 (🔼 가능성)\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
                 telegram_client.send_message(message=message)
+                last_rise_alert_time = datetime.datetime.now()
+            else:
+                now = datetime.datetime.now()
+                if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
+                    message = f"갭 {pair.diff():.2f}원 (갭이 작아졌습니다‼)\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
+                    telegram_client.send_message(message=message)
+
             previous_pair = pair
         except Exception as e:
             print(f"오류 발생: {e}")
