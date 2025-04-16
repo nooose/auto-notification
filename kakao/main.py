@@ -99,7 +99,7 @@ if __name__ == "__main__":
             else:
                 now = datetime.datetime.now()
                 if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
-                    message = f"갭 {pair.diff():.2f}원 (갭이 작아졌습니다‼)\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
+                    message = f"갭 -{pair.diff():.2f}원 (마이너스 갭‼‼)\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
                     telegram_client.send_message(message=message)
 
             previous_pair = pair
