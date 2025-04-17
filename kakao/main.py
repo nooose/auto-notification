@@ -10,18 +10,44 @@ from telegram_client import TelegramClient
 from envrionments import Environments
 import argparse
 import datetime
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import sys
+import os
 
+# 로그 설정
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", action="store_true", help="Enable debug mode") # 옵션이 있으면 True, 없으면 False
+    parser.add_argument("--log-level", default="INFO", help="Set log level (e.g. DEBUG, INFO, WARNING)")
     return parser.parse_args()
 
-DEBUG = get_args().debug
-INTERVAL_SECONDS = 10
+LOG_DIR = "logs"
+LOG_FILENAME = "app.log"
 
+logging.basicConfig(
+    level=getattr(logging, get_args().log_level.upper(), logging.INFO),
+    format='[%(asctime)s] %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+
+log_path = os.path.join(LOG_DIR, LOG_FILENAME)
+os.makedirs(LOG_DIR, exist_ok=True)
+handler = TimedRotatingFileHandler(
+    log_path,
+    when="midnight",
+    interval=1,
+    backupCount=5,  # 보관할 로그 파일 수
+    encoding="utf-8"
+)
+
+log = logging.getLogger(__name__)
+log.addHandler(handler)
+
+# 애플리케이션
+
+INTERVAL_SECONDS = 10
 KAKAO_CROP_AREA = (236, 366, 610, 183)
 SWITCH_ONE_CROP_AREA = (61, 1268, 418, 112)
-
 AMOUNT_PATTERN = r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
 
 def normalize_amount(amount: str) -> float:
@@ -47,17 +73,15 @@ if __name__ == "__main__":
     while True:
         try:
             meta_data = downloader.download_latest_photo(save_as="pre.jpg")
-
-            if DEBUG:
-                print(f"메타 정보: {meta_data}")
+            log.info(f"메타 정보: {meta_data}")
 
             kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
             switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
             kakao_text = ocr_reader.extract_text(image_path=kakao_image_path)
             switch_text = ocr_reader.extract_text(image_path=switch_image_path)
             
-            if DEBUG:
-                print(f"카카오 추출 환율: {kakao_text}\n스위치 추출 환율: {switch_text}")
+            log.info(f"카카오 추출 환율: {kakao_text}")
+            log.info(f"스위치 추출 환율: {switch_text}")
 
             kakao = normalize_amount(kakao_text)
             switch_one = normalize_amount(switch_text)
@@ -67,8 +91,7 @@ if __name__ == "__main__":
                 time.sleep(INTERVAL_SECONDS)
                 continue
 
-            if DEBUG:
-                print(f"환율 정보: {pair}")
+            log.info(f"환율 정보: {pair}")
 
             if (pair.is_switch_one_more_expensive()):
                 message = f"갭 {pair.diff:.2f}원 (🔼 가능성)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
@@ -82,5 +105,5 @@ if __name__ == "__main__":
 
             previous_pair = pair
         except Exception as e:
-            print(f"오류 발생: {e}")
+            log.exception(f"오류 발생: {e}")
         time.sleep(INTERVAL_SECONDS)

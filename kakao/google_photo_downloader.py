@@ -23,7 +23,7 @@ class PhotoDownloader:
             creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
-            print("토큰 갱신 완료")
+            print("[토큰 갱신 완료]")
         if not creds or not creds.valid:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
             creds = flow.run_local_server(port=0)
@@ -48,7 +48,6 @@ class PhotoDownloader:
         results = self.service.mediaItems().list(pageSize=1).execute()
         items = results.get("mediaItems", [])
         if not items:
-            print("사진을 찾을 수 없습니다.")
             return None
         item = items[0]
         raw_time = item["mediaMetadata"]["creationTime"]
