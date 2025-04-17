@@ -52,7 +52,16 @@ AMOUNT_PATTERN = r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
 
 def normalize_amount(amount: str) -> float:
     matches = re.findall(AMOUNT_PATTERN, amount)
-    first_match = matches[0] if matches else None
+    if not matches:
+        raise ValueError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount}'")
+
+    first_match = matches[0]
+
+    # 마침표가 2개 이상인 경우 → 마지막 마침표만 소수점으로 간주
+    if first_match.count('.') > 1:
+        last_dot_index = first_match.rfind('.')
+        first_match = first_match[:last_dot_index].replace('.', ',') + first_match[last_dot_index:]
+
     cleaned = first_match.replace(',', '')
     return round(float(cleaned), 2)
 
@@ -100,7 +109,11 @@ if __name__ == "__main__":
             else:
                 now = datetime.datetime.now()
                 if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
-                    message = f"갭 -{pair.diff:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
+
+                    if pair.diff > 0:
+                        message = f"갭 {pair.diff:.2f}원 (갭이 작아졌습니다‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
+                    else:
+                        message = f"갭 {pair.diff:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
                     telegram_client.send_message(message=message)
 
             previous_pair = pair

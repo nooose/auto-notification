@@ -4,13 +4,15 @@ from dataclasses import dataclass, field
 class ExchangeRatePair:
     switch_one: float
     kakao: float
-    diff: float = field(init=False)  # 생성자에서 초기화하지 않음
+    diff: float = field(init=False)
+    abs_diff: float = field(init=False)
 
     def __post_init__(self):
-        self.diff = round(abs(self.switch_one - self.kakao), 2)
+        self.diff = round(self.switch_one - self.kakao, 2)
+        self.abs_diff = abs(self.diff)
 
     def is_switch_one_more_expensive(self) -> bool:
-        return self.switch_one - self.kakao >= 0.05
+        return self.switch_one - self.kakao >= 1
     
     def __repr__(self):
         return f"(스위치원={self.switch_one}, 카카오={self.kakao}, 차이={self.diff})"

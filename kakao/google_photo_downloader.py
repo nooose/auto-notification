@@ -21,7 +21,7 @@ class PhotoDownloader:
         creds = None
         if os.path.exists(TOKEN_FILE):
             creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-        if creds and creds.expired and creds.refresh_token:
+        if creds and creds.expired:
             creds.refresh(Request())
             print("[토큰 갱신 완료]")
         if not creds or not creds.valid:
