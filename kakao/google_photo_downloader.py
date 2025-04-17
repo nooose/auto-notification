@@ -4,6 +4,8 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from photo_meta import PhotoMeta
+from datetime import datetime, timezone, timedelta
 
 # OAuth 2.0 인증 정보
 SCOPES = ["https://www.googleapis.com/auth/photoslibrary.readonly"]
@@ -29,24 +31,27 @@ class PhotoDownloader:
                 token.write(creds.to_json())
         return creds
 
-    def download_latest_photo(self, save_as: str):
-        item = self._get_latest_photo()
-        if not item:
+    def download_latest_photo(self, save_as: str) -> PhotoMeta:
+        meta_data = self._get_latest_photo()
+        if not meta_data:
             return
-
-        url = item["baseUrl"] + "=d"
-        response = requests.get(url)
+        
+        response = requests.get(meta_data.base_url)
         if response.status_code == 200:
             with open(save_as, "wb") as file:
                 file.write(response.content)
-            # print(f"사진 저장 완료. '{save_as}'.")
+            return meta_data
         else:
-            print("사진 다운로드에 실패하였습니다.:", response.status_code)
+            raise ValueError("사진 다운로드에 실패하였습니다.")
 
-    def _get_latest_photo(self):
+    def _get_latest_photo(self) -> PhotoMeta:
         results = self.service.mediaItems().list(pageSize=1).execute()
         items = results.get("mediaItems", [])
         if not items:
             print("사진을 찾을 수 없습니다.")
             return None
-        return items[0]
+        item = items[0]
+        raw_time = item["mediaMetadata"]["creationTime"]
+        utc = datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
+        url = item["baseUrl"] + "=d"
+        return PhotoMeta(creation_time_utc=utc, file_name=item["filename"], base_url=url)

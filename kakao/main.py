@@ -2,7 +2,8 @@ import time
 from google_photo_downloader import PhotoDownloader
 from photo_processor import PhotoProcessor
 from ocr import OCRReader
-from data import ExchangeRatePair
+from rate_pair import ExchangeRatePair
+from photo_meta import PhotoMeta
 import re
 from telegram_properties import TelegramProperties
 from telegram_client import TelegramClient
@@ -18,50 +19,15 @@ def get_args():
 DEBUG = get_args().debug
 INTERVAL_SECONDS = 10
 
-def extract_interval_text(text: str) -> str:
-    match = re.search(r'(\d+)\s*분', text)
-    return match.group(0) if match else ""
+KAKAO_CROP_AREA = (236, 366, 610, 183)
+SWITCH_ONE_CROP_AREA = (61, 1268, 418, 112)
 
-def toPair(text: str) -> ExchangeRatePair:
-    if DEBUG:
-        print(f"추출 텍스트: {text}")
-
-    amounts = re.findall(r'\d+(?:,\d{3})*(?:\.\d+)+', text)
-    print(f"추출된 금액: {amounts}")
-
-    filtered_amounts = []        
-    for amount in amounts:
-        cleaned = normalize_amount(amount)
-        print(f"{amount} -> {cleaned}")
-        if 1300 <= cleaned <= 1600:
-            filtered_amounts.append(cleaned)
-
-    print(f"필터링된 금액: {filtered_amounts}")
-    if len(filtered_amounts) < 2:
-        raise ValueError("환율 정보를 파싱할 수 없습니다.")
-
-    kakao = filtered_amounts[0]
-    switch_one = filtered_amounts[-1]
-    return ExchangeRatePair(switch_one=switch_one, kakao=kakao)
-
-def fix_amount(amount: str) -> str:
-    parts = amount.split('.')
-    
-    if len(parts) >= 3 and parts[0] == '1':
-        # "1.234.56" -> "1,234.56"
-        return f"1,{parts[1]}.{parts[2]}"
-    
-    if len(parts) >= 3 and parts[0] == '11':
-        # "11.449.96" -> "1,449.96"
-        return f"1,{parts[1]}.{parts[2]}"    
-    
-    return amount
+AMOUNT_PATTERN = r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
 
 def normalize_amount(amount: str) -> float:
-    fixed = fix_amount(amount)
-    cleaned = fixed.replace(',', '')
-    if (float(cleaned) > 10000):
-        return round(float(cleaned - 10000), 2)
+    matches = re.findall(AMOUNT_PATTERN, amount)
+    first_match = matches[0] if matches else None
+    cleaned = first_match.replace(',', '')
     return round(float(cleaned), 2)
 
 if __name__ == "__main__":
@@ -80,10 +46,22 @@ if __name__ == "__main__":
 
     while True:
         try:
-            downloader.download_latest_photo(save_as="pre.jpg")
-            # processor.preprocess_image(image_path="pre.jpg", output_path="post.jpg")
-            rates_text = ocr_reader.extract_text(image_path="pre.jpg")
-            pair = toPair(rates_text)
+            meta_data = downloader.download_latest_photo(save_as="pre.jpg")
+
+            if DEBUG:
+                print(f"메타 정보: {meta_data}")
+
+            kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
+            switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
+            kakao_text = ocr_reader.extract_text(image_path=kakao_image_path)
+            switch_text = ocr_reader.extract_text(image_path=switch_image_path)
+            
+            if DEBUG:
+                print(f"카카오 추출 환율: {kakao_text}\n스위치 추출 환율: {switch_text}")
+
+            kakao = normalize_amount(kakao_text)
+            switch_one = normalize_amount(switch_text)
+            pair = ExchangeRatePair(switch_one=switch_one, kakao=kakao)                
 
             if previous_pair == pair:
                 time.sleep(INTERVAL_SECONDS)
@@ -93,13 +71,13 @@ if __name__ == "__main__":
                 print(f"환율 정보: {pair}")
 
             if (pair.is_switch_one_more_expensive()):
-                message = f"갭 {pair.diff():.2f}원 (🔼 가능성)\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
+                message = f"갭 {pair.diff:.2f}원 (🔼 가능성)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
                 telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
                 now = datetime.datetime.now()
                 if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
-                    message = f"갭 -{pair.diff():.2f}원 (마이너스 갭‼‼)\n기준: {pair.switch_one}\n카뱅: {pair.kakao}"
+                    message = f"갭 -{pair.diff:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
                     telegram_client.send_message(message=message)
 
             previous_pair = pair
