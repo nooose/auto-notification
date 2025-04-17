@@ -48,22 +48,29 @@ log.addHandler(handler)
 INTERVAL_SECONDS = 10
 KAKAO_CROP_AREA = (236, 366, 610, 183)
 SWITCH_ONE_CROP_AREA = (61, 1268, 418, 112)
-AMOUNT_PATTERN = r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b"
+AMOUNT_PATTERN = r"\b\d{1,3}(?:[.,]\d{1,3}){1,}\b"
 
 def normalize_amount(amount: str) -> float:
     matches = re.findall(AMOUNT_PATTERN, amount)
     if not matches:
         raise ValueError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount}'")
 
-    first_match = matches[0]
+    amount_text = matches[0]
+    dot_count = amount_text.count('.')
 
-    # 마침표가 2개 이상인 경우 → 마지막 마침표만 소수점으로 간주
-    if first_match.count('.') > 1:
-        last_dot_index = first_match.rfind('.')
-        first_match = first_match[:last_dot_index].replace('.', ',') + first_match[last_dot_index:]
+    if dot_count > 1:
+        unified = amount_text.replace(',', '.')
+        last_dot = unified.rfind('.')
+        integer_part = unified[:last_dot].replace('.', '')
+        decimal_part = unified[last_dot + 1:]
 
-    cleaned = first_match.replace(',', '')
-    return round(float(cleaned), 2)
+        normalized = f"{integer_part}.{decimal_part}"
+        return float(normalized)
+
+    try:
+        return float(amount_text.replace(',', ''))
+    except ValueError:
+        raise ValueError(f"올바르지 않은 숫자 형식입니다: '{amount_text}'")
 
 if __name__ == "__main__":
     downloader = PhotoDownloader()
@@ -100,7 +107,7 @@ if __name__ == "__main__":
                 time.sleep(INTERVAL_SECONDS)
                 continue
 
-            log.info(f"환율 정보: {pair}")
+            log.info(f"{pair}")
 
             if (pair.is_switch_one_more_expensive()):
                 message = f"갭 {pair.diff:.2f}원 (🔼 가능성)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
