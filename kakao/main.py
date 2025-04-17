@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
             if (pair.is_switch_one_more_expensive()):
                 message = f"갭 {pair.diff:.2f}원 (🔼 가능성)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
-                # telegram_client.send_message(message=message)
+                telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
                 now = datetime.datetime.now()
@@ -114,7 +114,7 @@ if __name__ == "__main__":
                         message = f"갭 {pair.diff:.2f}원 (갭이 작아졌습니다‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
                     else:
                         message = f"갭 {pair.diff:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
-                    # telegram_client.send_message(message=message)
+                    telegram_client.send_message(message=message)
 
             previous_pair = pair
         except Exception as e:
