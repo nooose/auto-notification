@@ -82,7 +82,7 @@ if __name__ == "__main__":
     while True:
         try:
             meta_data = downloader.download_latest_photo(save_as="pre.jpg")
-            log.info(f"메타 정보: {meta_data}")
+            log.info(f"{meta_data}")
 
             kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
             switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
             if (pair.is_switch_one_more_expensive()):
                 message = f"갭 {pair.diff:.2f}원 (🔼 가능성)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
-                telegram_client.send_message(message=message)
+                # telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
                 now = datetime.datetime.now()
@@ -114,7 +114,7 @@ if __name__ == "__main__":
                         message = f"갭 {pair.diff:.2f}원 (갭이 작아졌습니다‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
                     else:
                         message = f"갭 {pair.diff:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
-                    telegram_client.send_message(message=message)
+                    # telegram_client.send_message(message=message)
 
             previous_pair = pair
         except Exception as e:

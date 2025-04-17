@@ -16,4 +16,4 @@ class PhotoMeta:
         return self.creation_time_utc.astimezone(KST).strftime("%H:%M:%S")
     
     def __repr__(self):
-        return f"파일 이름: {self.file_name}, 생성 시간: {self.creation_time_utc}"
+        return f"PhotoMeta (파일 이름: {self.file_name}, 생성 시간: {self.creation_time_utc})"
