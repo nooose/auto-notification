@@ -49,6 +49,7 @@ INTERVAL_SECONDS = 10
 KAKAO_CROP_AREA = (236, 366, 610, 183)
 SWITCH_ONE_CROP_AREA = (61, 1268, 418, 112)
 AMOUNT_PATTERN = r"\b\d{1,3}(?:[.,]\d{1,3}){1,}\b"
+NOISE_AMOUNT = 0.03
 
 def normalize_amount(amount: str) -> float:
     matches = re.findall(AMOUNT_PATTERN, amount)
@@ -110,7 +111,7 @@ if __name__ == "__main__":
             log.info(f"{pair}")
 
             if (pair.is_switch_one_more_expensive()):
-                message = f"갭 {pair.diff:.2f}원 (🔼 가능성)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
+                message = f"갭 {pair.diff + NOISE_AMOUNT:.2f}원 (🔼 가능성)\n평균: {pair.switch_one + NOISE_AMOUNT}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
                 telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
@@ -118,9 +119,9 @@ if __name__ == "__main__":
                 if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
 
                     if pair.diff > 0:
-                        message = f"갭 {pair.diff:.2f}원 (갭이 작아졌습니다‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
+                        message = f"갭 {pair.diff - NOISE_AMOUNT:.2f}원 (갭이 작아졌습니다‼)\n평균: {pair.switch_one - NOISE_AMOUNT}\n카뱅: {pair.kakao}"
                     else:
-                        message = f"갭 {pair.diff:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one}\n카뱅: {pair.kakao}"
+                        message = f"갭 {pair.diff - NOISE_AMOUNT:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one - NOISE_AMOUNT}\n카뱅: {pair.kakao}"
                     telegram_client.send_message(message=message)
 
             previous_pair = pair
