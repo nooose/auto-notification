@@ -46,17 +46,18 @@ log.addHandler(handler)
 # 애플리케이션
 
 INTERVAL_SECONDS = 10
-KAKAO_CROP_AREA = (236, 366, 610, 183)
-SWITCH_ONE_CROP_AREA = (61, 1268, 418, 112)
-AMOUNT_PATTERN = r"\b\d{1,3}(?:[.,]\d{1,3}){1,}\b"
+KAKAO_CROP_AREA = (249, 380, 563, 149)
+SWITCH_ONE_CROP_AREA = (286, 1199, 405, 129)
+AMOUNT_PATTERN = re.compile(r"\b(?:(?:\d{1,3}(?:[.,]\d{3})+)|\d+)(?:[.,]\d{2})\b")
 NOISE_AMOUNT = 0.03
 
 def normalize_amount(amount: str) -> float:
-    matches = re.findall(AMOUNT_PATTERN, amount)
-    if not matches:
-        raise ValueError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount}'")
+    amount_text = amount.strip()
+    match = AMOUNT_PATTERN.search(amount_text)
+    if not match:
+        raise ValueError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount_text}'")
 
-    amount_text = matches[0]
+    amount_text = match.group()
     dot_count = amount_text.count('.')
 
     if dot_count > 1:
@@ -83,6 +84,12 @@ if __name__ == "__main__":
         chat_id=Environments.get("TELEGRAM_CHAT_ID"),
     )
     telegram_client = TelegramClient(telegram_properties)
+
+    telegram_monitoring_properties = TelegramProperties(
+        bot_token=Environments.get("TELEGRAM_BOT_TOKEN"),
+        chat_id=Environments.get("TELEGRAM_MONITORING_CHAT_ID"),
+    )
+    telegram_monitoring_client = TelegramClient(telegram_monitoring_properties)
 
     last_rise_alert_time = None
     previous_pair = None
@@ -111,20 +118,26 @@ if __name__ == "__main__":
             log.info(f"{pair}")
 
             if (pair.is_switch_one_more_expensive()):
-                message = f"갭 {pair.diff + NOISE_AMOUNT:.2f}원 (🔼 가능성)\n평균: {pair.switch_one + NOISE_AMOUNT}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
+                noise_gap = pair.diff + NOISE_AMOUNT
+                noise_switch_one = pair.switch_one + NOISE_AMOUNT
+                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
                 telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
                 now = datetime.datetime.now()
                 if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
 
+                    noise_gap = pair.diff - NOISE_AMOUNT
+                    noise_switch_one = pair.switch_one - NOISE_AMOUNT
                     if pair.diff > 0:
-                        message = f"갭 {pair.diff - NOISE_AMOUNT:.2f}원 (갭이 작아졌습니다‼)\n평균: {pair.switch_one - NOISE_AMOUNT}\n카뱅: {pair.kakao}"
+                        message = f"갭 {noise_gap:.2f}원 (갭이 작아졌습니다‼)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}"
                     else:
-                        message = f"갭 {pair.diff - NOISE_AMOUNT:.2f}원 (마이너스 갭‼‼)\n평균: {pair.switch_one - NOISE_AMOUNT}\n카뱅: {pair.kakao}"
+                        message = f"갭 {noise_gap:.2f}원 (마이너스 갭‼‼)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}"
                     telegram_client.send_message(message=message)
 
             previous_pair = pair
+            telegram_monitoring_client.send_message(message=f"카뱅 환율: {pair.kakao:.2f}\n스원 환율: {pair.switch_one:.2f}\n기준시각: '{meta_data.kst_creation_time()}'")
         except Exception as e:
-            log.exception(f"오류 발생: {e}")
+            log.exception(f"에러 발생: {e}")
+            telegram_monitoring_client.send_message(message=f"에러 발생: {e}")
         time.sleep(INTERVAL_SECONDS)
