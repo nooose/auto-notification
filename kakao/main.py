@@ -136,7 +136,10 @@ if __name__ == "__main__":
                     telegram_client.send_message(message=message)
 
             previous_pair = pair
-            telegram_monitoring_client.send_message(message=f"카뱅 환율: {pair.kakao:.2f}\n스원 환율: {pair.switch_one:.2f}\n기준시각: '{meta_data.kst_creation_time()}'")
+            telegram_monitoring_client.send_photo_group({
+                switch_image_path: f"스원 환율: {pair.switch_one:.2f}, 기준시각: '{meta_data.kst_creation_time()}'",
+                kakao_image_path: f"카뱅 환율: {pair.kakao:.2f}, 기준시각: '{meta_data.kst_creation_time()}'",
+            })
         except Exception as e:
             log.exception(f"에러 발생: {e}")
             telegram_monitoring_client.send_message(message=f"에러 발생: {e}")
