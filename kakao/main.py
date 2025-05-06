@@ -120,7 +120,7 @@ if __name__ == "__main__":
             if (pair.is_switch_one_more_expensive()):
                 noise_gap = pair.diff + NOISE_AMOUNT
                 noise_switch_one = pair.switch_one + NOISE_AMOUNT
-                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time()}'"
+                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time_from_name}'"
                 telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
@@ -137,8 +137,8 @@ if __name__ == "__main__":
 
             previous_pair = pair
             telegram_monitoring_client.send_photo_group({
-                switch_image_path: f"스원 환율: {pair.switch_one:.2f}, 기준시각: '{meta_data.kst_creation_time()}'",
-                kakao_image_path: f"카뱅 환율: {pair.kakao:.2f}, 기준시각: '{meta_data.kst_creation_time()}'",
+                switch_image_path: f"스원 환율: {pair.switch_one:.2f}, 기준시각: '{meta_data.kst_creation_time_from_name}'",
+                kakao_image_path: f"카뱅 환율: {pair.kakao:.2f}, 기준시각: '{meta_data.kst_creation_time_from_name}'",
             })
         except Exception as e:
             log.exception(f"에러 발생: {e}")

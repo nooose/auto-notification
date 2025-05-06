@@ -38,7 +38,7 @@ class PhotoDownloader:
         except Exception as e:
             self._refresh_token()
             raise e
-            
+
     def _refresh_token(self):
         self.creds.refresh(Request())
         print("[토큰 갱신 완료]")
@@ -46,7 +46,7 @@ class PhotoDownloader:
     def _download_latest_file(self, save_as: str) -> PhotoMeta:
         results = self.service.files().list(
             pageSize = 1,
-            fields = "files(id, name, modifiedTime, mimeType)",
+            fields = "files(id, name, createdTime, modifiedTime, mimeType)",
             orderBy = "modifiedTime desc",
             q = "trashed = false"
         ).execute()
@@ -58,11 +58,11 @@ class PhotoDownloader:
         file = items[0]
         file_id = file["id"]
         file_name = file["name"]
-        modified_time = file["modifiedTime"]
+        createdTime = file["createdTime"]
 
         self._download_file(file_id, save_as)
         return PhotoMeta(
-            creation_time_utc=datetime.fromisoformat(modified_time.replace("Z", "+00:00")),
+            creation_time_utc=datetime.fromisoformat(createdTime.replace("Z", "+00:00")),
             file_name=file_name,
         )
 
