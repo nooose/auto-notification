@@ -7,7 +7,6 @@ KST = timezone(timedelta(hours=9))
 class PhotoMeta:
     creation_time_utc: datetime
     file_name: str
-    base_url: str
 
     def kst_creation_date_time(self) -> str:
         return self.creation_time_utc.astimezone(KST).strftime("%Y-%m-%d %H:%M:%S")
