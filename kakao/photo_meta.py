@@ -7,7 +7,7 @@ KST = timezone(timedelta(hours=9))
 class PhotoMeta:
     creation_time_utc: datetime
     file_name: str
-    kst_creation_time_from_name: str = field(init=False)
+    kst_creation_time_from_name: str = None
 
     def __post_init__(self):
         date_time_kst = datetime.strptime(self.file_name, "%Y%m%d_%H%M%S").replace(tzinfo=KST)
