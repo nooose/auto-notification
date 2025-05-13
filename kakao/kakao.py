@@ -48,6 +48,8 @@ log.addHandler(handler)
 INTERVAL_SECONDS = 10
 KAKAO_CROP_AREA = (249, 380, 563, 149)
 SWITCH_ONE_CROP_AREA = (286, 1199, 405, 129)
+REFRESH_CROP_AREA = (284, 523, 515, 69)
+
 AMOUNT_PATTERN = re.compile(r"\b(?:(?:\d{1,3}(?:[.,]\d{3})+)|\d+)(?:[.,]\d{2})\b")
 NOISE_AMOUNT = 0.03
 
@@ -101,11 +103,14 @@ if __name__ == "__main__":
 
             kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
             switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
+            refresh_image_path = processor.crop_image(image_path="pre.jpg", output_path="refresh.jpg", crop_rect=REFRESH_CROP_AREA)
             kakao_text = ocr_reader.extract_text(image_path=kakao_image_path)
             switch_text = ocr_reader.extract_text(image_path=switch_image_path)
+            refresh_text = ocr_reader.extract_text(image_path=refresh_image_path)
             
             log.info(f"카카오 추출 환율: {kakao_text}")
             log.info(f"스위치 추출 환율: {switch_text}")
+            log.info(f"갱신 추출 환율: {refresh_text}")
 
             kakao = normalize_amount(kakao_text)
             switch_one = normalize_amount(switch_text)
@@ -120,7 +125,8 @@ if __name__ == "__main__":
             if (pair.is_switch_one_more_expensive()):
                 noise_gap = pair.diff + NOISE_AMOUNT
                 noise_switch_one = pair.switch_one + NOISE_AMOUNT
-                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}\n기준시각: '{meta_data.kst_creation_time_from_name}'"
+                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao} [{refresh_text}]\n기준시각: '{meta_data.kst_creation_time()}'"
+
                 telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
             else:
@@ -137,8 +143,8 @@ if __name__ == "__main__":
 
             previous_pair = pair
             telegram_monitoring_client.send_photo_group({
-                switch_image_path: f"스원 환율: {pair.switch_one:.2f}, 기준시각: '{meta_data.kst_creation_time_from_name}'",
-                kakao_image_path: f"카뱅 환율: {pair.kakao:.2f}, 기준시각: '{meta_data.kst_creation_time_from_name}'",
+                switch_image_path : f"스원: {pair.switch_one:.2f} '{meta_data.kst_creation_time()}'",
+                kakao_image_path : f"카뱅: {pair.kakao:.2f} '{meta_data.kst_creation_time()}'",
             })
         except Exception as e:
             log.exception(f"에러 발생: {e}")
