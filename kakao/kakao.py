@@ -125,7 +125,7 @@ if __name__ == "__main__":
             if (pair.is_switch_one_more_expensive()):
                 noise_gap = pair.diff + NOISE_AMOUNT
                 noise_switch_one = pair.switch_one + NOISE_AMOUNT
-                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao} [{refresh_text}]\n기준시각: '{meta_data.kst_creation_time()}'"
+                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao} ({refresh_text})\n기준시각: '{meta_data.kst_creation_time()}'"
 
                 telegram_client.send_message(message=message)
                 last_rise_alert_time = datetime.datetime.now()
