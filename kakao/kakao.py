@@ -53,8 +53,7 @@ REFRESH_CROP_AREA = (284, 523, 515, 69)
 AMOUNT_PATTERN = re.compile(r"\b(?:(?:\d{1,3}(?:[.,]\d{3})+)|\d+)(?:[.,]\d{2})\b")
 NOISE_AMOUNT = 0.03
 
-def normalize_amount(amount: str) -> float:
-    amount_text = amount.strip()
+def normalize_amount(amount_text: str) -> float:
     match = AMOUNT_PATTERN.search(amount_text)
     if not match:
         raise ValueError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount_text}'")
@@ -104,9 +103,9 @@ if __name__ == "__main__":
             kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
             switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
             refresh_image_path = processor.crop_image(image_path="pre.jpg", output_path="refresh.jpg", crop_rect=REFRESH_CROP_AREA)
-            kakao_text = ocr_reader.extract_text(image_path=kakao_image_path)
-            switch_text = ocr_reader.extract_text(image_path=switch_image_path)
-            refresh_text = ocr_reader.extract_text(image_path=refresh_image_path)
+            kakao_text = ocr_reader.extract_text(image_path=kakao_image_path).strip()
+            switch_text = ocr_reader.extract_text(image_path=switch_image_path).strip()
+            refresh_text = ocr_reader.extract_text(image_path=refresh_image_path).strip()
             
             log.info(f"카카오 추출 환율: {kakao_text}")
             log.info(f"스위치 추출 환율: {switch_text}")
