@@ -1,9 +1,8 @@
 import time
-from google_photo_downloader import PhotoDownloader
+from photo_downloader import PhotoDownloader
 from photo_processor import PhotoProcessor
 from ocr import OCRReader
 from rate_pair import ExchangeRatePair
-from photo_meta import PhotoMeta
 import re
 from telegram_properties import TelegramProperties
 from telegram_client import TelegramClient
@@ -44,19 +43,27 @@ log = logging.getLogger(__name__)
 log.addHandler(handler)
 
 # 애플리케이션
-
-INTERVAL_SECONDS = 10
-KAKAO_CROP_AREA = (249, 380, 563, 149)
-SWITCH_ONE_CROP_AREA = (286, 1199, 405, 129)
-REFRESH_CROP_AREA = (284, 523, 515, 69)
+INTERVAL_SECONDS = 3
+KAKAO_CROP_AREA = (25, 130, 100, 100)
+SWITCH_ONE_CROP_AREA = (200, 300, 100, 100)
+REFRESH_CROP_AREA = (300, 400, 100, 100)
 
 AMOUNT_PATTERN = re.compile(r"\b(?:(?:\d{1,3}(?:[.,]\d{3})+)|\d+)(?:[.,]\d{2})\b")
 NOISE_AMOUNT = 0.03
 
+
+class NormalizeAmountError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
 def normalize_amount(amount_text: str) -> float:
     match = AMOUNT_PATTERN.search(amount_text)
     if not match:
-        raise ValueError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount_text}'")
+        raise NormalizeAmountError(f"유효한 금액 형식을 찾을 수 없습니다: '{amount_text}'")
 
     amount_text = match.group()
     dot_count = amount_text.count('.')
@@ -76,7 +83,7 @@ def normalize_amount(amount_text: str) -> float:
         raise ValueError(f"올바르지 않은 숫자 형식입니다: '{amount_text}'")
 
 if __name__ == "__main__":
-    downloader = PhotoDownloader()
+    downloader = PhotoDownloader(Environments.get("STREAM_URL"))
     processor = PhotoProcessor()
     ocr_reader = OCRReader()
 
@@ -97,8 +104,7 @@ if __name__ == "__main__":
 
     while True:
         try:
-            meta_data = downloader.download_latest_photo(save_as="pre.jpg")
-            log.info(f"{meta_data}")
+            downloader.download_latest_photo(path="pre.jpg")
 
             kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
             switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
@@ -145,6 +151,8 @@ if __name__ == "__main__":
                 switch_image_path : f"스원: {pair.switch_one:.2f} '{meta_data.kst_creation_time()}'",
                 kakao_image_path : f"카뱅: {pair.kakao:.2f} '{meta_data.kst_creation_time()}'",
             })
+        except NormalizeAmountError as e:
+            log.exception(f"금액 에러 발생: {e}")
         except Exception as e:
             log.exception(f"에러 발생: {e}")
             telegram_monitoring_client.send_message(message=f"에러 발생: {e}")
