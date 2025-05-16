@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
             log.info(f"{pair}")
 
-            now = datetime.now(KST)
+            now = datetime.datetime.now(KST)
             if (pair.is_switch_one_more_expensive()):
                 noise_gap = pair.diff + NOISE_AMOUNT
                 noise_switch_one = pair.switch_one + NOISE_AMOUNT
