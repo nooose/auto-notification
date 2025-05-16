@@ -4,18 +4,27 @@ import numpy as np
 import threading
 
 class PhotoDownloader:
-    def __init__(self, url: str, width: int = 1920, height: int = 1080):
+    def __init__(self, url: str, width: int = 1920, height: int = 1080, restart_interval: int = 150):
         self.url = url
         self.width = width
         self.height = height
+        self.restart_interval = restart_interval
+        self.frame_count = 0
+
         self.latest_frame = None
         self.running = True
         self.lock = threading.Lock()
+        self.proc = None
+
         self._start_ffmpeg()
         self.read_thread = threading.Thread(target=self._read_frames_loop, daemon=True)
         self.read_thread.start()
 
     def _start_ffmpeg(self):
+        if self.proc:
+            self.proc.terminate()
+            self.proc.wait()
+
         self.proc = subprocess.Popen(
             [
                 "ffmpeg",
@@ -31,23 +40,35 @@ class PhotoDownloader:
                 "-"
             ],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,  # 필요 시 PIPE로 변경 가능
             bufsize=10**8
         )
 
     def _read_frames_loop(self):
         frame_size = self.width * self.height * 3
+
         while self.running:
+            self.frame_count += 1
             try:
                 raw_image = self.proc.stdout.read(frame_size)
                 if not raw_image:
                     continue
+
                 frame = np.frombuffer(raw_image, dtype=np.uint8).reshape((self.height, self.width, 3))
+
                 with self.lock:
                     self.latest_frame = frame
+
+                if self.frame_count >= self.restart_interval:
+                    print(f"[FFmpeg 재시작] {self.restart_interval} 프레임마다 재시작.")
+                    self.frame_count = 0
+                    self.latest_frame = None
+                    self._start_ffmpeg()
+
             except Exception as e:
                 print(f"[프레임 수신 실패] {e}")
-                break
+                self._start_ffmpeg()
+                self.frame_count = 0
 
     def download_latest_photo(self, path: str):
         with self.lock:
@@ -69,5 +90,6 @@ class PhotoDownloader:
     def close(self):
         self.running = False
         self.read_thread.join()
-        self.proc.terminate()
-        self.proc.wait()
+        if self.proc:
+            self.proc.terminate()
+            self.proc.wait()
