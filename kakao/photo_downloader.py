@@ -69,6 +69,21 @@ class PhotoDownloader:
             except Exception as e:
                 print(f"[프레임 수신 실패] {e}")
 
+    def _restart_ffmpeg(self):
+        print(f"[FFmpeg 재시작] {self.restart_interval} 프레임마다 재시작.")
+        # 기존 프로세스 종료
+        if self.proc:
+            try:
+                self.proc.terminate()
+                self.proc.wait(timeout=2)
+            except Exception as e:
+                print(f"[프로세스 종료 오류] {e}")
+        
+        # 새 프로세스 시작
+        self._start_ffmpeg()
+        self.frame_count = 0
+        self.latest_frame = None
+
     def download_latest_photo(self, path: str):
         self.frame_count += 1
         with self.lock:
