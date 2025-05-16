@@ -9,6 +9,7 @@ from telegram_client import TelegramClient
 from envrionments import Environments
 import argparse
 import datetime
+from zoneinfo import ZoneInfo
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import sys
@@ -43,14 +44,15 @@ log = logging.getLogger(__name__)
 log.addHandler(handler)
 
 # 애플리케이션
-INTERVAL_SECONDS = 3
-KAKAO_CROP_AREA = (25, 130, 100, 100)
-SWITCH_ONE_CROP_AREA = (200, 300, 100, 100)
-REFRESH_CROP_AREA = (300, 400, 100, 100)
+INTERVAL_SECONDS = 1.5
+KAKAO_CROP_AREA = (75, 168, 345, 65)
+SWITCH_ONE_CROP_AREA = (123, 555, 200, 64)
+REFRESH_CROP_AREA = (169, 228, 140, 50)
+FRAME_FILE_NAME = "frame.jpg"
 
+KST = ZoneInfo("Asia/Seoul")
 AMOUNT_PATTERN = re.compile(r"\b(?:(?:\d{1,3}(?:[.,]\d{3})+)|\d+)(?:[.,]\d{2})\b")
 NOISE_AMOUNT = 0.03
-
 
 class NormalizeAmountError(Exception):
     def __init__(self, message: str):
@@ -83,6 +85,11 @@ def normalize_amount(amount_text: str) -> float:
         raise ValueError(f"올바르지 않은 숫자 형식입니다: '{amount_text}'")
 
 if __name__ == "__main__":
+    try:
+        os.remove(FRAME_FILE_NAME)
+    except FileNotFoundError:
+        pass
+
     downloader = PhotoDownloader(Environments.get("STREAM_URL"))
     processor = PhotoProcessor()
     ocr_reader = OCRReader()
@@ -104,11 +111,11 @@ if __name__ == "__main__":
 
     while True:
         try:
-            downloader.download_latest_photo(path="pre.jpg")
+            downloader.download_latest_photo(path=FRAME_FILE_NAME)
 
-            kakao_image_path = processor.crop_image(image_path="pre.jpg", output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
-            switch_image_path = processor.crop_image(image_path="pre.jpg", output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
-            refresh_image_path = processor.crop_image(image_path="pre.jpg", output_path="refresh.jpg", crop_rect=REFRESH_CROP_AREA)
+            kakao_image_path = processor.crop_image(image_path=FRAME_FILE_NAME, output_path="kakako.jpg", crop_rect=KAKAO_CROP_AREA)
+            switch_image_path = processor.crop_image(image_path=FRAME_FILE_NAME, output_path="switch.jpg", crop_rect=SWITCH_ONE_CROP_AREA)
+            refresh_image_path = processor.crop_image(image_path=FRAME_FILE_NAME, output_path="refresh.jpg", crop_rect=REFRESH_CROP_AREA)
             kakao_text = ocr_reader.extract_text(image_path=kakao_image_path).strip()
             switch_text = ocr_reader.extract_text(image_path=switch_image_path).strip()
             refresh_text = ocr_reader.extract_text(image_path=refresh_image_path).strip()
@@ -122,20 +129,21 @@ if __name__ == "__main__":
             pair = ExchangeRatePair(switch_one=switch_one, kakao=kakao)                
 
             if previous_pair == pair:
+                log.info("환율이 동일하여 생략합니다.")
                 time.sleep(INTERVAL_SECONDS)
                 continue
 
             log.info(f"{pair}")
 
+            now = datetime.now(KST)
             if (pair.is_switch_one_more_expensive()):
                 noise_gap = pair.diff + NOISE_AMOUNT
                 noise_switch_one = pair.switch_one + NOISE_AMOUNT
-                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}\n({refresh_text})\n기준시각: '{meta_data.kst_creation_time()}'"
+                message = f"갭 {noise_gap:.2f}원 (🔼 가능성)\n평균: {noise_switch_one:.2f}\n카뱅: {pair.kakao}\n({refresh_text})\n기준시각: '{now.strftime("%H:%M:%S")}'"
 
                 telegram_client.send_message(message=message)
-                last_rise_alert_time = datetime.datetime.now()
+                last_rise_alert_time = now
             else:
-                now = datetime.datetime.now()
                 if last_rise_alert_time is not None and now < last_rise_alert_time + datetime.timedelta(minutes=5):
 
                     noise_gap = pair.diff - NOISE_AMOUNT
@@ -148,11 +156,13 @@ if __name__ == "__main__":
 
             previous_pair = pair
             telegram_monitoring_client.send_photo_group({
-                switch_image_path : f"스원: {pair.switch_one:.2f} '{meta_data.kst_creation_time()}'",
-                kakao_image_path : f"카뱅: {pair.kakao:.2f} '{meta_data.kst_creation_time()}'",
+                switch_image_path : f"스원: {pair.switch_one:.2f}",
+                kakao_image_path : f"카뱅: {pair.kakao:.2f} '{refresh_text}'",
             })
         except NormalizeAmountError as e:
             log.exception(f"금액 에러 발생: {e}")
+        except FileNotFoundError as e:
+            log.exception(f"파일 에러 발생: {e}")
         except Exception as e:
             log.exception(f"에러 발생: {e}")
             telegram_monitoring_client.send_message(message=f"에러 발생: {e}")

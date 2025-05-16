@@ -89,5 +89,5 @@ class TelegramClient:
             print(f"텔레그램 사진 그룹 전송 실패: {e}")
 
         finally:
-            for f in files.values():
-                f.close()
+            for file in files.values():
+                file.close()

@@ -4,7 +4,7 @@ import numpy as np
 import threading
 
 class PhotoDownloader:
-    def __init__(self, url: str, width: int = 1280, height: int = 720):
+    def __init__(self, url: str, width: int = 1920, height: int = 1080):
         self.url = url
         self.width = width
         self.height = height
