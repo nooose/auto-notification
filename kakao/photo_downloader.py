@@ -48,29 +48,20 @@ class PhotoDownloader:
         frame_size = self.width * self.height * 3
 
         while self.running:
-            self.frame_count += 1
             try:
                 raw_image = self.proc.stdout.read(frame_size)
-                if not raw_image:
-                    continue
-
                 frame = np.frombuffer(raw_image, dtype=np.uint8).reshape((self.height, self.width, 3))
 
                 with self.lock:
                     self.latest_frame = frame
 
                 if self.frame_count >= self.restart_interval:
-                    print(f"[FFmpeg 재시작] {self.restart_interval} 프레임마다 재시작.")
+                    print(f"[FFmpeg 재시작]")
                     self.frame_count = 0
-                    self.latest_frame = None
                     self._start_ffmpeg()
 
-            except Exception as e:
-                print(f"[프레임 수신 실패] {e}")
-                self._start_ffmpeg()
-                self.frame_count = 0
-
     def download_latest_photo(self, path: str):
+        self.frame_count += 1
         with self.lock:
             if self.latest_frame is not None:
                 cropped_frame = self._remove_black_borders(self.latest_frame)
