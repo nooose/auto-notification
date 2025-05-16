@@ -4,7 +4,7 @@ import numpy as np
 import threading
 
 class PhotoDownloader:
-    def __init__(self, url: str, width: int = 1920, height: int = 1080, restart_interval: int = 150):
+    def __init__(self, url: str, width: int = 1920, height: int = 1080, restart_interval: int = 50):
         self.url = url
         self.width = width
         self.height = height
@@ -22,9 +22,12 @@ class PhotoDownloader:
 
     def _start_ffmpeg(self):
         if self.proc:
+            print("프로세스 재연결을 위한 종료")
             self.proc.terminate()
             self.proc.wait()
 
+        self.frame_count = 0
+        self.latest_frame = None
         self.proc = subprocess.Popen(
             [
                 "ffmpeg",
@@ -40,9 +43,10 @@ class PhotoDownloader:
                 "-"
             ],
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,  # 필요 시 PIPE로 변경 가능
+            stderr=subprocess.PIPE,  # 필요 시 PIPE로 변경 가능
             bufsize=10**8
         )
+        self.running = True
 
     def _read_frames_loop(self):
         frame_size = self.width * self.height * 3
@@ -59,7 +63,7 @@ class PhotoDownloader:
 
                 if self.frame_count >= self.restart_interval:
                     print(f"[FFmpeg 재시작] {self.restart_interval} 프레임마다 재시작.")
-                    self.frame_count = 0
+                    self.running = False
                     self._start_ffmpeg()
 
             except Exception as e:
