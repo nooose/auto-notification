@@ -28,11 +28,11 @@ class ExchangeRatePair:
         self.abs_diff = abs(self.diff)
 
         if (self.switch_one <= 1000 or self.kakao <= 1000):
-            raise ValueError(f"스위치원: {self.switch_one} 카카오: {self.kakao} 환율이 너무 낮습니다.")
+            raise LowExchangeRateError(f"스위치원: {self.switch_one} 카카오: {self.kakao} - 환율이 너무 낮습니다.")
         if (self.switch_one >= 2000 or self.kakao >= 2000):
-            raise ValueError(f"스위치원: {self.switch_one} 카카오: {self.kakao} 환율이 너무 높습니다.")
+            raise HighExchangeRateError(f"스위치원: {self.switch_one} 카카오: {self.kakao} - 환율이 너무 높습니다.")
         if (self.abs_diff >= 30):
-            raise ValueError(f"환율 차이가 너무 큽니다. 스위치원: {self.switch_one} 카카오: {self.kakao} 차이: {self.diff}")
+            raise LargeExchangeRateDifferenceError(f"환율 차이가 너무 큽니다. 스위치원: {self.switch_one} 카카오: {self.kakao} 차이: {self.diff}")
 
     def is_switch_one_more_expensive(self) -> bool:
         return self.switch_one - self.kakao >= 1
