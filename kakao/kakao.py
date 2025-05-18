@@ -2,7 +2,7 @@ import time
 from photo_downloader import PhotoDownloader
 from photo_processor import PhotoProcessor
 from ocr import OCRReader
-from rate_pair import ExchangeRatePair
+from rate_pair import ExchangeRatePair, ExchangeRateError
 import re
 from telegram_properties import TelegramProperties
 from telegram_client import TelegramClient
@@ -159,8 +159,10 @@ if __name__ == "__main__":
                 switch_image_path : f"스원: {pair.switch_one:.2f}",
                 kakao_image_path : f"카뱅: {pair.kakao:.2f} '{refresh_text}'",
             })
+        except ExchangeRateError as e:
+            log.exception(f"환율 객체 생성 에러 발생: {e}")
         except NormalizeAmountError as e:
-            log.exception(f"금액 에러 발생: {e}")
+            log.exception(f"금액 포맷 에러 발생: {e}")
         except FileNotFoundError as e:
             log.exception(f"파일 에러 발생: {e}")
         except Exception as e:

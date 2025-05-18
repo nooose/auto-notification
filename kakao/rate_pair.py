@@ -1,5 +1,21 @@
 from dataclasses import dataclass, field
 
+class ExchangeRateError(Exception):
+    """ExchangeRatePair 클래스에서 발생하는 예외의 기본 클래스입니다."""
+    pass
+
+class LowExchangeRateError(ExchangeRateError):
+    """환율이 너무 낮을 때 발생하는 예외입니다."""
+    pass
+
+class HighExchangeRateError(ExchangeRateError):
+    """환율이 너무 높을 때 발생하는 예외입니다."""
+    pass
+
+class LargeExchangeRateDifferenceError(ExchangeRateError):
+    """환율 차이가 너무 클 때 발생하는 예외입니다."""
+    pass
+
 @dataclass
 class ExchangeRatePair:
     switch_one: float
