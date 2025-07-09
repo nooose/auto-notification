@@ -122,3 +122,5 @@ cython_debug/
 
 # Log files
 *.log
+
+logs/
