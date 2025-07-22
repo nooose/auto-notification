@@ -1,5 +1,8 @@
 requests
+beautifulsoup4
 opencv-python
 pytesseract
 pillow
 python-dotenv
+selenium
+webdriver-manager
