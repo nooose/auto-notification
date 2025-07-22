@@ -23,7 +23,7 @@ class ExchangeRates:
     google: float
     woori: float
     hana: float
-    threshold: float = 0.01 # 임계값
+    threshold: float = 0.9 # 임계값
     
     avg_rate: float = field(init=False)
     avg_diff: float = field(init=False)
